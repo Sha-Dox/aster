@@ -32,7 +32,7 @@ struct FormalEmailPreviewView: View {
                 Text(state.isDemo ? "Demo · no email will be delivered" : "Review before accepting").font(.system(size: 11)).foregroundStyle(.secondary)
                 Spacer()
                 Button("Use full email") { onUse(email); dismiss() }.disabled(sending)
-                Button(sending ? "Sending…" : "Accept & send") { send() }.buttonStyle(.borderedProminent).disabled(sending || email.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || (email.to.isEmpty && email.cc.isEmpty && (email.bcc ?? "").isEmpty))
+                Button(sending ? "Sending…" : "Accept & send") { send() }.buttonStyle(AccentButtonStyle()).disabled(sending || email.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || (email.to.isEmpty && email.cc.isEmpty && (email.bcc ?? "").isEmpty))
             }.padding(18).modifier(GlassSurface(radius: 18)).padding(12)
         }.frame(width: 760, height: 710).background { AppBackdrop() }.tint(.aster).interactiveDismissDisabled(sending)
             .onDisappear {

@@ -78,7 +78,7 @@ struct ReplyAssistantView: View {
                         }.buttonStyle(.borderless).padding(.top, 12)
                     }
                     HStack {
-                        Button(generating ? "Writing preview…" : preview == nil ? "Generate preview" : "Regenerate preview") { generate() }.buttonStyle(.borderedProminent).disabled(busy || attemptedSend || intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        Button(generating ? "Writing preview…" : preview == nil ? "Generate preview" : "Regenerate preview") { generate() }.buttonStyle(AccentButtonStyle()).disabled(busy || attemptedSend || intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         if generating { ProgressView().controlSize(.small); Button("Cancel") { generationTask?.cancel(); generating = false }.buttonStyle(.borderless) }
                         Spacer()
                         Text(providerLabel).font(.system(size: 10)).foregroundStyle(.secondary)
@@ -101,7 +101,7 @@ struct ReplyAssistantView: View {
                 Label(state.isDemo ? "Demo · no email will be delivered" : "Waiting for your acceptance", systemImage: "checkmark.shield").font(.system(size: 11)).foregroundStyle(.secondary)
                 Spacer()
                 Button("Save draft & close") { saveDraft() }.disabled(busy || !currentPreview)
-                Button(sending ? "Sending…" : "Accept & send") { accept() }.buttonStyle(.borderedProminent).disabled(busy || !currentPreview || (preview?.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true))
+                Button(sending ? "Sending…" : "Accept & send") { accept() }.buttonStyle(AccentButtonStyle()).disabled(busy || !currentPreview || (preview?.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true))
             }.padding(18).modifier(GlassSurface(radius: 18)).padding(12)
         }.frame(width: 780, height: 790).background { AppBackdrop() }.tint(.aster).interactiveDismissDisabled(sending)
             .onDisappear { generationTask?.cancel() }

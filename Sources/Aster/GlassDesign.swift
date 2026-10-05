@@ -14,9 +14,9 @@ struct GlassSurface: ViewModifier {
         if reducedTransparency || contrast == .increased || glassStyle == "solid" {
             content.background(Color(nsColor: .controlBackgroundColor), in: shape).overlay(shape.stroke(Color.primary.opacity(0.18)))
         } else if #available(macOS 26.0, *) {
-            content.glassEffect((glassStyle == "clear" ? Glass.clear : Glass.regular).tint(tinted ? Color.aster.opacity(0.10) : nil).interactive(interactive), in: shape)
+            content.glassEffect((glassStyle == "clear" ? Glass.clear : Glass.regular).tint(tinted ? Color.aster.opacity(0.14) : nil).interactive(interactive), in: shape)
                 .overlay(shape.stroke(LinearGradient(colors: [.white.opacity(0.5), .white.opacity(0.07)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 0.75))
-                .shadow(color: .black.opacity(0.06), radius: 14, y: 6)
+                .shadow(color: .black.opacity(0.09), radius: 22, y: 9)
         } else {
             content.background(.ultraThinMaterial, in: shape).overlay(shape.stroke(.white.opacity(0.15)))
         }
@@ -39,8 +39,9 @@ struct AppBackdrop: View {
             if reducedTransparency || contrast == .increased || glassStyle == "solid" { Color(nsColor: .windowBackgroundColor) }
             else { DesktopGlassBackdrop() }
             if !reducedTransparency && contrast != .increased && glassStyle != "solid" {
-                Ellipse().fill(Color.aster.opacity(scheme == .dark ? 0.26 : 0.22)).frame(width: 690, height: 620).blur(radius: 110).offset(x: -500, y: -380)
-                Ellipse().fill(Color.cyan.opacity(scheme == .dark ? 0.16 : 0.14)).frame(width: 600, height: 400).blur(radius: 120).offset(x: 520, y: 380)
+                Ellipse().fill(Color.aster.opacity(scheme == .dark ? 0.38 : 0.28)).frame(width: 690, height: 620).blur(radius: 110).offset(x: -500, y: -380)
+                Ellipse().fill(Color.pink.opacity(scheme == .dark ? 0.14 : 0.10)).frame(width: 420, height: 460).blur(radius: 110).offset(x: 240, y: -220)
+                Ellipse().fill(Color.cyan.opacity(scheme == .dark ? 0.25 : 0.18)).frame(width: 600, height: 400).blur(radius: 120).offset(x: 520, y: 380)
             }
         }.ignoresSafeArea().allowsHitTesting(false)
     }

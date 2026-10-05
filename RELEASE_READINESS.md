@@ -1,4 +1,4 @@
-# Release readiness — Aster 0.5
+# Release readiness — Aster 0.6
 
 The current package is an expanded development release. It is not certified for production replacement of an existing mail client.
 
@@ -17,7 +17,7 @@ The current package is an expanded development release. It is not certified for 
 | --- | --- | --- |
 | Microsoft live integration | Unverified; Entra client ID required | Two simultaneous addresses, sign-in, silent refresh, isolated sign-out, tenant policy, full/delta sync, reply, attachment, draft and deliberate test send against dedicated Microsoft accounts |
 | Gmail live integration | Unverified; Desktop OAuth client required | Two simultaneous Google addresses plus mixed Microsoft/Google sessions, browser PKCE, refresh persistence, labels/history expiry, draft replacement, attachments and deliberate test send against consumer and Workspace accounts |
-| New visual and accessibility QA | Partial inspection; complete visual and accessibility pass pending | Inspect Liquid Glass in light/dark, increased contrast/reduced transparency, keyboard focus, VoiceOver, small window layouts and composer autosave, unified reader, per-account settings and instruction → editable preview → acceptance flow |
+| New visual and accessibility QA | New workspace redesign builds; on-screen inspection blocked by desktop capture failure/timeouts; complete visual and accessibility pass pending | Inspect Liquid Glass in light/dark, increased contrast/reduced transparency, keyboard focus, VoiceOver, small window layouts and composer autosave, unified reader, per-account settings and instruction → editable preview → acceptance flow |
 | Google public OAuth verification | Pending | Required restricted-scope consent verification and any applicable security assessment, plus published privacy policy |
 | Public signing and notarization | Pending | Developer ID signature, entitlement review, Apple notary acceptance, stapled ticket and Gatekeeper assessment on a clean Mac |
 | Mailbox scale and recovery | Partially covered with synthetic tests | Real large mailboxes, network loss, terminated sync, token expiry, quota/throttling, draft crash recovery and send-uncertainty recovery walkthrough |

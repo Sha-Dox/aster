@@ -15,13 +15,12 @@ struct ContentView: View {
     @FocusState private var searching: Bool
     var body: some View {
         HStack(spacing: 8) {
-            sidebar.frame(width: 212).padding(.leading, 10).padding(.vertical, 10)
+            sidebar.frame(width: 188).padding(.leading, 10).padding(.vertical, 10)
             if state.isReady {
-                inbox.frame(minWidth: 350, idealWidth: 410, maxWidth: 470)
-                ReaderView().frame(minWidth: 440, maxWidth: .infinity).clipShape(RoundedRectangle(cornerRadius: 24)).shadow(color: .black.opacity(0.035), radius: 20, y: 8).padding(.trailing, 12).padding(.vertical, 12)
+                inbox.frame(minWidth: 320, idealWidth: 365, maxWidth: 420)
+                ReaderView().frame(minWidth: 400, maxWidth: .infinity).clipShape(RoundedRectangle(cornerRadius: 24)).shadow(color: .black.opacity(0.035), radius: 20, y: 8).padding(.trailing, 12).padding(.vertical, 12)
             } else { onboarding.frame(maxWidth: .infinity, maxHeight: .infinity) }
         }
-        .background { AppBackdrop() }
         .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
         .tint(.aster)
         .overlay(alignment: .bottom) { banner.padding(.horizontal, 24).padding(.bottom, 18) }
@@ -37,14 +36,13 @@ struct ContentView: View {
     }
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                Image(systemName: "asterisk").font(.system(size: 24, weight: .semibold)).foregroundStyle(Color.aster)
-                Text("aster").font(.system(size: 26, weight: .semibold, design: .rounded)).tracking(-0.8)
-            }.padding(.top, 49).padding(.bottom, 34).padding(.leading, 25)
+            VStack(alignment: .leading, spacing: 5) {
+                SectionEyebrow(title: "Mailbox")
+                Text(state.isDemo ? "Demo workspace" : state.providerName).font(.system(size: 20, weight: .medium, design: .rounded)).tracking(-0.5)
+            }.padding(.horizontal, 20).padding(.top, 24).padding(.bottom, 24)
             Button { state.compose() } label: {
-                HStack { Image(systemName: "square.and.pencil"); Text("New message"); Spacer(); Text("⌘N").font(.system(size: 11)).foregroundStyle(.secondary) }
-                    .font(.system(size: 13, weight: .medium)).padding(.horizontal, 13).padding(.vertical, 11)
-            }.buttonStyle(.plain).modifier(GlassSurface(radius: 14, interactive: true, tinted: true)).padding(.horizontal, 16).padding(.bottom, 25).disabled(!state.isReady)
+                HStack { Image(systemName: "square.and.pencil"); Text("Compose"); Spacer(); Text("⌘N").font(.system(size: 10)).opacity(0.7) }
+            }.buttonStyle(AccentButtonStyle()).padding(.horizontal, 16).padding(.bottom, 25).disabled(!state.isReady)
             VStack(spacing: 4) {
                 nav("Inbox", icon: "tray", key: "inbox", count: state.messages.filter { $0.isInFolder(state.inboxID) && !$0.isRead }.count)
                 nav("Priority inbox", icon: "tray.full", key: "priority", count: state.priorityCount)
@@ -75,7 +73,7 @@ struct ContentView: View {
                         Text(state.isDemo ? "Explore Aster" : state.accountName.isEmpty ? "Connect an account" : state.accountName).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
                     }
                     Spacer(); Image(systemName: "gearshape").font(.system(size: 12)).foregroundStyle(.tertiary)
-                }.padding(.horizontal, 22).padding(.vertical, 21)
+                }.padding(.horizontal, 16).padding(.vertical, 21)
             }.buttonStyle(.plain)
         }
         .modifier(GlassSurface(radius: 25))
@@ -96,10 +94,10 @@ struct ContentView: View {
     private var inbox: some View {
         VStack(spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                Text(state.title).font(.system(size: 29, weight: .semibold)).tracking(-0.8)
+                Text(state.title).font(.system(size: 28, weight: .semibold, design: .rounded)).tracking(-0.8)
                 Spacer()
                 Button { if state.isSyncing { state.cancelSync() } else { Task { await state.sync() } } } label: { Image(systemName: state.isSyncing ? "xmark" : "arrow.triangle.2.circlepath").frame(width: 29, height: 29) }.buttonStyle(.plain).modifier(GlassSurface(radius: 15, interactive: true)).foregroundStyle(.secondary).help(state.isSyncing ? "Pause sync" : "Sync mail · ⇧⌘R").disabled(state.isDemo)
-            }.padding(.horizontal, 27).padding(.top, 49).padding(.bottom, 7)
+            }.padding(.horizontal, 27).padding(.top, 24).padding(.bottom, 7)
             HStack(spacing: 6) { Circle().fill(state.status.hasPrefix("Offline") || state.status.contains("attention") || state.status.contains("paused") ? Color.orange : Color.green.opacity(0.7)).frame(width: 5, height: 5); Text(state.status).font(.system(size: 10)).foregroundStyle(.secondary); Spacer() }.padding(.horizontal, 28).padding(.bottom, 22)
             HStack(spacing: 9) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.tertiary)
@@ -114,7 +112,7 @@ struct ContentView: View {
                 Button { state.unreadOnly.toggle() } label: { Text(state.unreadOnly ? "Unread" : "All mail").font(.system(size: 11)); Image(systemName: "line.3.horizontal.decrease").font(.system(size: 11)) }.buttonStyle(.plain).foregroundStyle(state.unreadOnly ? Color.aster : .secondary).help("Toggle unread only")
             }.padding(.horizontal, 27).padding(.top, 25).padding(.bottom, 12)
             ScrollView {
-                LazyVStack(spacing: 3) {
+                LazyVStack(spacing: 8) {
                     ForEach(state.visible) { mail in
                         Button { if mail.isDraft { state.openDraft(mail) } else { state.select(mail.id) } } label: { MailRow(mail: mail, selected: state.selectedID == mail.id, hint: state.attention.first { $0.id == mail.id }?.kind) }.buttonStyle(.plain)
                             .contextMenu {
@@ -132,7 +130,7 @@ struct ContentView: View {
                 }.padding(.horizontal, 12)
             }
             HStack { Text("\(state.visible.count) conversations"); Spacer(); Image(systemName: "internaldrive"); Text("On this Mac") }.font(.system(size: 10)).foregroundStyle(.tertiary).padding(.horizontal, 27).padding(.vertical, 15)
-        }
+        }.padding(.vertical, 12).modifier(GlassSurface(radius: 25)).padding(.vertical, 12)
     }
     private var briefing: some View {
         VStack(alignment: .leading, spacing: 13) {
@@ -158,7 +156,7 @@ struct ContentView: View {
     }
     private var onboarding: some View {
         VStack(spacing: 20) {
-            Image(systemName: "asterisk").font(.system(size: 62, weight: .light)).foregroundStyle(Color.aster).padding(.bottom, 8)
+            AsterMark(size: 72).padding(.bottom, 8)
             Text("A little clarity.\nA lot less inbox.").font(.system(size: 40, weight: .semibold)).tracking(-1.5).multilineTextAlignment(.center)
             Text("Your mail, quietly in order. A fast, local inbox\nwith a clear view of what needs you.").font(.system(size: 15)).foregroundStyle(.secondary).multilineTextAlignment(.center).lineSpacing(5)
             Button { state.showSettings = true } label: { Label("Connect your mail", systemImage: "person.badge.key").padding(.horizontal, 20).padding(.vertical, 8) }.buttonStyle(.borderedProminent).controlSize(.large).padding(.top, 14)
@@ -182,30 +180,47 @@ struct MailRow: View {
     let mail: Mail
     let selected: Bool
     let hint: AttentionKind?
+    var account: String? = nil
+    @State private var hovered = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private func timestamp(_ date: Date) -> String {
         if Calendar.current.isDateInToday(date) { return date.formatted(date: .omitted, time: .shortened) }
         if Calendar.current.isDateInYesterday(date) { return "Yesterday" }
         return date.formatted(.dateTime.month(.abbreviated).day())
     }
-    @State private var hovered = false
-    @EnvironmentObject var state: AppState
     var body: some View {
         HStack(alignment: .top, spacing: 11) {
-            Circle().fill(mail.isRead ? Color.clear : Color.aster).frame(width: 5, height: 5).padding(.top, 7)
-            VStack(alignment: .leading, spacing: 5) {
-                HStack { Text(mail.sender.name).font(.system(size: 12, weight: mail.isRead ? .medium : .semibold)); Spacer(); Text(timestamp(mail.date)).font(.system(size: 9)).foregroundStyle(.tertiary).lineLimit(1) }
-                Text(mail.subject).font(.system(size: 12, weight: selected ? .medium : .regular)).foregroundStyle(.primary.opacity(0.85)).lineLimit(1)
-                Text(mail.preview).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
-                HStack(spacing: 6) {
-                    if let hint { Label(hint.rawValue, systemImage: hint.symbol).font(.system(size: 9, weight: .medium)).foregroundStyle(hint == .security ? Color.orange : Color.aster) }
-                    if mail.hasAttachments { Image(systemName: "paperclip").font(.system(size: 10)).foregroundStyle(.tertiary) }
-                    if mail.isFlagged { Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(.orange) }
-                    Spacer()
-                }.frame(height: hint == nil && !mail.hasAttachments && !mail.isFlagged ? 0 : 13)
+            IdentityAvatar(name: mail.sender.name, size: 35)
+                .overlay(alignment: .bottomTrailing) {
+                    if !mail.isRead { Circle().fill(Color.aster).frame(width: 8, height: 8).overlay(Circle().stroke(Color.canvas, lineWidth: 2)).offset(x: 2, y: 2) }
+                }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(mail.sender.name).font(.system(size: 12, weight: mail.isRead ? .medium : .semibold)).lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text(timestamp(mail.date)).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Text(mail.subject).font(.system(size: 13, weight: mail.isRead ? .regular : .medium)).foregroundStyle(.primary).lineLimit(2).multilineTextAlignment(.leading)
+                Text(mail.preview).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading).lineSpacing(2)
+                if let account { Text(account).font(.system(size: 9, weight: .medium)).foregroundStyle(Color.aster).lineLimit(1).padding(.top, 2) }
+                if hint != nil || mail.hasAttachments || mail.isFlagged {
+                    HStack(spacing: 7) {
+                        if let hint { Label(hint.rawValue, systemImage: hint.symbol).font(.system(size: 9, weight: .medium)).foregroundStyle(hint == .security ? Color.orange : Color.aster).padding(.horizontal, 7).padding(.vertical, 4).background((hint == .security ? Color.orange : Color.aster).opacity(0.1), in: Capsule()) }
+                        if mail.hasAttachments { Image(systemName: "paperclip").font(.system(size: 10)).foregroundStyle(.secondary) }
+                        if mail.isFlagged { Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(.orange) }
+                        Spacer(minLength: 0)
+                    }.padding(.top, 2)
+                }
             }
-        }.padding(.horizontal, 13).padding(.vertical, 14)
-            .background(selected ? Color.aster.opacity(0.095) : hovered ? Color.primary.opacity(0.025) : .clear, in: RoundedRectangle(cornerRadius: 11))
-            .contentShape(Rectangle()).onHover { hovered = $0 }
+        }.padding(13).frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 17).fill(LinearGradient(colors: selected ? [Color.aster.opacity(0.20), Color.aster.opacity(0.08)] : [Color.primary.opacity(hovered ? 0.055 : 0.018), Color.primary.opacity(hovered ? 0.025 : 0.008)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            }
+            .overlay(RoundedRectangle(cornerRadius: 17).stroke(selected ? Color.aster.opacity(0.38) : Color.primary.opacity(hovered ? 0.08 : 0.035), lineWidth: 0.8))
+            .overlay(alignment: .leading) { if selected { Capsule().fill(Color.aster).frame(width: 3, height: 28).padding(.leading, 1) } }
+            .shadow(color: .aster.opacity(selected ? 0.08 : 0), radius: 9, y: 4)
+            .contentShape(RoundedRectangle(cornerRadius: 17)).onHover { hovered = $0 }
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hovered)
             .accessibilityElement(children: .combine).accessibilityAddTraits(selected ? [.isSelected, .isButton] : [.isButton])
     }
 }

@@ -7,7 +7,8 @@ struct ReaderView: View {
     var body: some View {
         VStack(spacing: 0) {
             GlassGroup { HStack(spacing: 15) {
-                Text("\(state.thread.count) MESSAGE\(state.thread.count == 1 ? "" : "S")").font(.system(size: 9, weight: .medium)).tracking(1.5).foregroundStyle(.tertiary)
+                Label("Reading room", systemImage: "text.book.closed").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                Text("\(state.thread.count)").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary).padding(.horizontal, 7).padding(.vertical, 4).background(Color.primary.opacity(0.05), in: Capsule())
                 Spacer()
                 tool("Archive", "archivebox") { state.moveSelected(to: "archive") }
                 tool("Trash", "trash") { state.moveSelected(to: "deleteditems") }
@@ -22,7 +23,7 @@ struct ReaderView: View {
                         Button("Forward") { state.compose(mode: "forward") }
                     }
                 } label: { Image(systemName: "ellipsis").font(.system(size: 16)) }.menuStyle(.borderlessButton).fixedSize().foregroundStyle(.secondary)
-            }.padding(.horizontal, 15).padding(.vertical, 10).modifier(GlassSurface(radius: 20)) }.padding(.horizontal, 25).padding(.top, 32).padding(.bottom, 25).disabled(state.selected == nil)
+            }.padding(.horizontal, 15).padding(.vertical, 10).modifier(GlassSurface(radius: 20)) }.padding(.horizontal, 25).padding(.top, 20).padding(.bottom, 18).disabled(state.selected == nil)
             if let selected = state.selected {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
@@ -33,7 +34,7 @@ struct ReaderView: View {
                             Spacer()
                             Button { state.mutate(selected, kind: "flag", value: String(!selected.isFlagged)) } label: { Image(systemName: selected.isFlagged ? "star.fill" : "star").foregroundStyle(selected.isFlagged ? Color.orange : Color.secondary) }.buttonStyle(.plain).help("Star conversation")
                         }.padding(.bottom, 15)
-                        Text(selected.subject).font(.system(size: 30, weight: .semibold)).tracking(-0.9).lineSpacing(2).textSelection(.enabled).padding(.bottom, 20)
+                        Text(selected.subject).font(.system(size: 32, weight: .semibold, design: .serif)).tracking(-0.7).lineSpacing(2).textSelection(.enabled).padding(.bottom, 20)
                         HStack(spacing: 12) {
                             Button { state.summarize() } label: { Label("Summarize", systemImage: "text.alignleft").font(.system(size: 11, weight: .medium)).padding(.horizontal, 13).padding(.vertical, 8) }.buttonStyle(.plain).modifier(QuietGlass()).help("Summarize cached conversation · ⇧⌘S")
                             Text(AppleIntelligenceStatus.available && (UserDefaults.standard.string(forKey: "intelligenceMode") ?? "apple") == "apple" ? "Apple Intelligence · on-device" : "Original email below").font(.system(size: 10)).foregroundStyle(.tertiary)
@@ -41,7 +42,7 @@ struct ReaderView: View {
                         }.padding(.bottom, 27)
                         if state.showSummary { summaryPanel.padding(.bottom, 28) }
                         ForEach(state.thread) { mail in
-                            message(mail).padding(.bottom, 28)
+                            message(mail).padding(24).frame(maxWidth: .infinity, alignment: .leading).background(Color.canvas.opacity(0.94), in: RoundedRectangle(cornerRadius: 21)).overlay(RoundedRectangle(cornerRadius: 21).stroke(Color.primary.opacity(0.055), lineWidth: 0.8)).shadow(color: .black.opacity(0.025), radius: 16, y: 7).padding(.bottom, 18)
                             if mail.id != state.thread.last?.id { Divider().opacity(0.45).padding(.bottom, 28) }
                         }
                         if selected.hasAttachments {
@@ -54,22 +55,20 @@ struct ReaderView: View {
                                 }
                             }.padding(.bottom, 24)
                         }
-                        HStack {
-                            Button { state.compose(mode: "reply") } label: { Label("Reply", systemImage: "arrowshape.turn.up.left").font(.system(size: 12, weight: .medium)).padding(.horizontal, 18).padding(.vertical, 9) }.buttonStyle(.borderedProminent)
-                            Button("Reply all") { state.compose(mode: "replyAll") }
-                        Button("Write reply with AI") { state.openReplyAssistant() }
-                        Button("Write reply all with AI") { state.openReplyAssistant(replyAll: true) }.buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(.secondary).padding(.leading, 10)
-                            Button { state.openReplyAssistant() } label: { Label("Write with AI", systemImage: "sparkles") }.buttonStyle(.borderless).font(.system(size: 12)).padding(.leading, 10)
-                            Spacer(); Text("⌘R").font(.system(size: 11)).foregroundStyle(.tertiary)
-                        }.padding(.top, 8).padding(.bottom, 35)
-                    }.padding(.horizontal, 39).padding(.top, 14).frame(maxWidth: 800).frame(maxWidth: .infinity)
+                        HStack(spacing: 12) {
+                            Button { state.compose(mode: "reply") } label: { Label("Reply", systemImage: "arrowshape.turn.up.left") }.buttonStyle(AccentButtonStyle())
+                            Button("Reply all") { state.compose(mode: "replyAll") }.buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(.secondary)
+                            Spacer(minLength: 8)
+                            Button { state.openReplyAssistant() } label: { Label("Write with AI", systemImage: "sparkles").font(.system(size: 12, weight: .medium)).padding(.horizontal, 13).padding(.vertical, 10) }.buttonStyle(.plain).modifier(GlassSurface(radius: 13, interactive: true, tinted: true)).foregroundStyle(Color.aster)
+                        }.padding(14).modifier(GlassSurface(radius: 20)).padding(.top, 6).padding(.bottom, 26)
+                    }.padding(.horizontal, 28).padding(.top, 14).frame(maxWidth: 800).frame(maxWidth: .infinity)
                 }
             } else {
                 Spacer(); Image(systemName: "envelope.open").font(.system(size: 38, weight: .ultraLight)).foregroundStyle(Color.aster.opacity(0.5))
                 Text("Space for what matters.").font(.system(size: 21, weight: .medium)).padding(.top, 14)
                 Text("Select a conversation to read the original email.").font(.system(size: 12)).foregroundStyle(.secondary).padding(.top, 4); Spacer()
             }
-        }.background(Color.canvas.opacity(0.95))
+        }.modifier(GlassSurface(radius: 25))
     }
     private func tool(_ title: String, _ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) { Image(systemName: symbol).font(.system(size: 14)).frame(width: 22, height: 22) }.buttonStyle(.plain).padding(5).modifier(GlassSurface(radius: 12, interactive: true)).foregroundStyle(.secondary).help(title).accessibilityLabel(title)
@@ -77,13 +76,13 @@ struct ReaderView: View {
     private func message(_ mail: Mail) -> some View {
         VStack(alignment: .leading, spacing: 24) {
             HStack(alignment: .top, spacing: 12) {
-                Text(initials(mail.sender.name)).font(.system(size: 11, weight: .medium)).foregroundStyle(Color.aster).frame(width: 36, height: 36).background(Color.aster.opacity(0.09), in: Circle())
+                IdentityAvatar(name: mail.sender.name, size: 42)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(mail.sender.name).font(.system(size: 12, weight: .semibold))
+                    Text(mail.sender.name).font(.system(size: 13, weight: .semibold))
                     Text("\(mail.sender.address) · to \(mail.to.map(\.name).joined(separator: ", "))").font(.system(size: 10)).foregroundStyle(.secondary).textSelection(.enabled)
                 }
                 Spacer(minLength: 8)
-                Text(mail.date.formatted(date: .abbreviated, time: .shortened)).font(.system(size: 9)).foregroundStyle(.tertiary).multilineTextAlignment(.trailing)
+                Text(mail.date.formatted(date: .abbreviated, time: .shortened)).font(.system(size: 10)).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
             }
             if mail.isHTML { SafeHTMLView(html: mail.body).frame(height: 460).clipShape(RoundedRectangle(cornerRadius: 8)) }
             else { Text(mail.body).font(.system(size: 14)).lineSpacing(7).foregroundStyle(.primary.opacity(0.87)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }

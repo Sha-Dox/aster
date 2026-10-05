@@ -47,7 +47,7 @@ struct ComposerView: View {
                 Button { do { let files = try state.importAttachments(existing: draft.files ?? []); draft.files = (draft.files ?? []) + files; scheduleAutosave() } catch { failure = error.localizedDescription } } label: { Image(systemName: "paperclip") }.help("Attach files · up to 3 MB each").disabled(busy)
                 if busy { ProgressView().controlSize(.small) }
                 Button("Save draft") { save(send: false, close: false) }.disabled(busy)
-                Button("Send") { save(send: true, close: true) }.buttonStyle(.borderedProminent).disabled(busy || (draft.to.isEmpty && draft.cc.isEmpty && (draft.bcc ?? "").isEmpty)).keyboardShortcut(.return, modifiers: [.command, .shift])
+                Button("Send") { save(send: true, close: true) }.buttonStyle(AccentButtonStyle()).disabled(busy || (draft.to.isEmpty && draft.cc.isEmpty && (draft.bcc ?? "").isEmpty)).keyboardShortcut(.return, modifiers: [.command, .shift])
             }.padding(18).modifier(GlassSurface(radius: 18)).padding(12)
         }.frame(width: 760, height: 730).background { AppBackdrop() }.interactiveDismissDisabled().tint(.aster)
             .onChange(of: draft.body) { _, _ in scheduleAutosave() }

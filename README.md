@@ -7,7 +7,7 @@
 
 A native, open-source macOS mail client for Microsoft 365, Outlook, Gmail and Google Workspace. SwiftUI, SQLite, Microsoft Graph, Gmail API, MSAL and AppAuth. Original messages remain central; an attention briefing helps you decide what to read next.
 
-Version 0.5 provides instruction-driven email previews, customizable writing language and style, multiple simultaneous accounts, a unified Priority inbox, per-account inbox and Junk controls, native Liquid Glass surfaces, on-device Apple Intelligence, Google authentication and synchronization, durable offline changes, paged cached mail, autosaved local drafts, Bcc and outgoing attachments. It is a substantially expanded development release. See [release readiness](RELEASE_READINESS.md) for the remaining production gates.
+Version 0.6 provides instruction-driven email previews, customizable writing language and style, multiple simultaneous accounts, a unified Priority inbox, per-account inbox and Junk controls, native Liquid Glass surfaces, on-device Apple Intelligence, Google authentication and synchronization, durable offline changes, paged cached mail, autosaved local drafts, Bcc and outgoing attachments. It is a substantially expanded development release. See [release readiness](RELEASE_READINESS.md) for the remaining production gates.
 
 ## Run and build
 
@@ -78,6 +78,10 @@ Search in the unified view queries every account’s cached Priority mail, with 
 - Command palette, keyboard navigation, native menus, light/dark appearance, VoiceOver labels, reduced-transparency and increased-contrast fallbacks.
 
 Clear Liquid Glass is the default for navigation, search, briefing and action controls. The window and composer use a native blurred desktop backdrop with transparent window backing. Settings → Appearance offers Clear glass, Frosted glass and Solid. Reduce Transparency and increased contrast use opaque surfaces. Email reading surfaces remain solid for readability. Earlier systems use native materials.
+
+## Interface
+
+A compact workspace bar and account rail anchor the unified inbox. Conversation cards combine sender avatars, unread indicators, receiving-account labels and attention hints. Cached unread/reply metrics provide a quick overview. The reader uses an editorial subject heading, individual message surfaces and focused reply/AI actions. Glass surfaces sit over a tinted desktop blur; solid and accessibility fallbacks remain available.
 
 ## Select text and formalise it
 

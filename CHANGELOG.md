@@ -2,6 +2,14 @@
 
 All versions below are development releases. No production-ready public binary is currently published.
 
+## 0.6.0
+
+- New workspace header and dedicated unified-account navigation rail.
+- Gradient sender avatars, clearer unread dots and account labels.
+- Inbox metrics, richer selected conversation cards and reduced-motion hover feedback.
+- Editorial reader typography, individual message surfaces and simplified reply actions.
+- Stronger glass depth, ambient color and consistent compose/reply buttons.
+
 ## 0.5.0
 
 - Selection-based Formalise in the composer and reply assistant.
