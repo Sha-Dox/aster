@@ -10,6 +10,7 @@ xcuserdata/
 .AppleDouble/
 work/
 outputs/
+artifacts/
 *.app/
 *.dSYM/
 *.zip

@@ -16,8 +16,10 @@ jobs:
       - name: Package application
         run: |
           ./scripts/build-app.sh release
-          ditto --norsrc --noextattr -c -k --keepParent ../Aster.app ../Aster-macOS.zip
+          mkdir -p artifacts
+          ditto --norsrc --noextattr -c -k --keepParent ../Aster.app artifacts/Aster-macOS.zip
       - uses: actions/upload-artifact@v4
         with:
           name: Aster-development
-          path: ../Aster-macOS.zip
+          path: artifacts/Aster-macOS.zip
+          if-no-files-found: error
