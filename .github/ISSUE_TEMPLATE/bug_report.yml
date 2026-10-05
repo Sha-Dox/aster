@@ -1,0 +1,38 @@
+name: Bug report
+description: Report a reproducible problem with fictional data.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Do not attach real mail, credentials, account exports or private local paths. Report security issues privately using SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: Aster version or commit
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: macOS version and architecture
+      placeholder: macOS 26, Apple silicon
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Use demo mode or fictional messages whenever possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Sanitized diagnostics
+      description: Remove tokens, mail content, personal identifiers and local paths.

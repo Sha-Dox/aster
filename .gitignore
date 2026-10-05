@@ -1,0 +1,40 @@
+# Swift / Xcode generated files
+.build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Local artifacts and workspace data
+.DS_Store
+.AppleDouble/
+work/
+outputs/
+*.app/
+*.dSYM/
+*.zip
+*.log
+
+# Credentials and signing material
+.env
+.env.*
+!.env.example
+*client_secret*.json
+credentials*.json
+*.p12
+*.pfx
+*.pem
+*.key
+*.mobileprovision
+*.provisionprofile
+*.authstate
+*.keychain*
+
+# Mailbox / session data
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.eml
+*.mbox
+accounts*.json

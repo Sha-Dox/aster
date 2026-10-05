@@ -1,0 +1,23 @@
+name: macOS checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test-and-package:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+      - name: Core regression tests
+        run: swift test
+      - name: Package application
+        run: |
+          ./scripts/build-app.sh release
+          ditto --norsrc --noextattr -c -k --keepParent ../Aster.app ../Aster-macOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Aster-development
+          path: ../Aster-macOS.zip
