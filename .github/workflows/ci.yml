@@ -18,7 +18,7 @@ jobs:
           ./scripts/build-app.sh release
           mkdir -p artifacts
           ditto --norsrc --noextattr -c -k --keepParent ../Aster.app artifacts/Aster-macOS.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Aster-development
           path: artifacts/Aster-macOS.zip
