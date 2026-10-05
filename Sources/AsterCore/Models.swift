@@ -99,7 +99,7 @@ public struct LocalIntelligence: IntelligenceProvider {
     public func summarize(_ thread: [Mail]) async throws -> ThreadSummary {
         guard let mail = thread.sorted(by: { $0.date < $1.date }).last else { throw MailError.message("No messages to summarize.") }
         let hint = AttentionEngine.classify(mail)
-        return ThreadSummary(summary: mail.preview, action: hint?.kind == .reply ? "Review the question and reply to \(mail.sender.name)." : "Review the original message for details.", details: ["\(thread.count) cached message\(thread.count == 1 ? "" : "s") in this conversation.", "From \(mail.sender.name) · \(mail.sender.address)", "Dates and commitments are not inferred by local rules."], source: "Local preview · no model used")
+        return ThreadSummary(summary: mail.preview, action: hint?.kind == .reply ? "Review the question and reply to \(mail.sender.name)." : "Review the original message for details.", details: [], source: "Local preview · no model used")
     }
     public func draftReply(_ thread: [Mail]) async throws -> String {
         throw MailError.message("Configure an AI provider in Settings to generate a reply. You can always write a reply yourself.")

@@ -2,6 +2,18 @@
 
 All versions below are development releases. No production-ready public binary is currently published.
 
+## 0.7.0
+
+- Saved workspace name and optional per-address name overrides.
+- Personalized writing prompts, sender previews and workspace greeting.
+- Deterministic name/signature repair in generated previews; custom signatures take precedence.
+- Backward-compatible account preferences and explicit unnamed-account support.
+- Compact padding and sidebar spacing, with inset reading surfaces.
+- Restrict window dragging to the title strip; text and backdrop cannot drag the window.
+- Normal window level, no forced activation and asynchronous file panels.
+- Request-focused prose summaries, concrete next actions and optional additional context.
+- Regression coverage for names, window behavior and summary handling.
+
 ## 0.6.0
 
 - New workspace header and dedicated unified-account navigation rail.

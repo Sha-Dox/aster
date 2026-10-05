@@ -25,6 +25,7 @@ struct ReplyAssistantView: View {
     @EnvironmentObject var workspace: WorkspaceState
     @Environment(\.dismiss) private var dismiss
     let context: ReplyAssistantContext
+    @AppStorage("senderName") private var workspaceName = ""
     @State private var intent = ""
     @State private var intentSelection = NSRange(location: 0, length: 0)
     @State private var previewSelection = NSRange(location: 0, length: 0)
@@ -37,7 +38,7 @@ struct ReplyAssistantView: View {
     @State private var failure: String?
     @State private var generationTask: Task<Void, Never>?
     init(context: ReplyAssistantContext, style: WritingStyle) { self.context = context; _style = State(initialValue: style) }
-    private var request: ReplyRequest { ReplyRequest(intent: intent, style: style, senderAddress: context.accountEmail, targetMessageID: context.mail.id) }
+    private var request: ReplyRequest { ReplyRequest(intent: intent, style: style, senderAddress: context.accountEmail, targetMessageID: context.mail.id, senderName: SenderPersonalization.resolve(workspaceName: workspaceName, accountName: state.policy.senderName)) }
     private var currentPreview: Bool { preview != nil && generatedRequest == request }
     private var providerLabel: String {
         switch UserDefaults.standard.string(forKey: "intelligenceMode") ?? "apple" {
@@ -53,12 +54,12 @@ struct ReplyAssistantView: View {
             HStack {
                 Label("Reply assistant", systemImage: "sparkles").font(.system(size: 23, weight: .semibold))
                 Spacer(); Button("Close") { dismiss() }.disabled(sending)
-            }.padding(24)
+            }.padding(16)
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 7) {
                         Text(context.mail.subject).font(.system(size: 15, weight: .semibold))
-                        Text("Replying to \(context.mail.sender.name) · from \(context.accountEmail)").font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text("Replying to \(context.mail.sender.name) · from \(state.senderIdentity)").font(.system(size: 11)).foregroundStyle(.secondary)
                         Text("Uses \(context.thread.count) cached messages. The model may receive shortened context.").font(.system(size: 10)).foregroundStyle(.tertiary)
                     }
                     VStack(alignment: .leading, spacing: 8) {
@@ -95,14 +96,14 @@ struct ReplyAssistantView: View {
                         Text("Review the decision, substitutions, names and dates. Only Accept & send delivers this preview.").font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                     if let failure { Text(failure).font(.system(size: 12)).foregroundStyle(.orange).textSelection(.enabled) }
-                }.padding(.horizontal, 26).padding(.bottom, 20).disabled(sending)
+                }.padding(.horizontal, 16).padding(.bottom, 20).disabled(sending)
             }
             HStack {
                 Label(state.isDemo ? "Demo · no email will be delivered" : "Waiting for your acceptance", systemImage: "checkmark.shield").font(.system(size: 11)).foregroundStyle(.secondary)
                 Spacer()
                 Button("Save draft & close") { saveDraft() }.disabled(busy || !currentPreview)
                 Button(sending ? "Sending…" : "Accept & send") { accept() }.buttonStyle(AccentButtonStyle()).disabled(busy || !currentPreview || (preview?.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true))
-            }.padding(18).modifier(GlassSurface(radius: 18)).padding(12)
+            }.padding(12).modifier(GlassSurface(radius: 18)).padding(12)
         }.frame(width: 780, height: 790).background { AppBackdrop() }.tint(.aster).interactiveDismissDisabled(sending)
             .onDisappear { generationTask?.cancel() }
     }

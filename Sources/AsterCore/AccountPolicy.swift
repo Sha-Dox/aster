@@ -15,6 +15,7 @@ public struct AccountPolicy: Codable, Equatable, Sendable {
     public var hiddenFolders: Set<String> = []
     public var prioritySenders: [String] = []
     public var writingStyle: WritingStyle?
+    public var senderName: String? // nil inherits the workspace name; empty explicitly leaves it unset.
     public init() {}
 }
 public struct AccountProfile: Codable, Identifiable, Equatable, Sendable {

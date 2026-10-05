@@ -10,7 +10,8 @@ import AppKit
             WorkspaceView().environmentObject(workspace).frame(minWidth: 1040, minHeight: 680)
                 .task { await workspace.start() }
         }
-        .defaultSize(width: 1380, height: 900)
+        .defaultSize(width: 1240, height: 780)
+        .windowResizability(.contentMinSize)
         .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .newItem) { Button("New Message") { state.compose() }.keyboardShortcut("n") }
@@ -37,12 +38,9 @@ import AppKit
 }
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular); NSApp.activate(ignoringOtherApps: true)
+        NSApp.setActivationPolicy(.regular)
         NSApp.windows.first?.title = "Aster"
-        NSApp.windows.first?.isOpaque = false
-        NSApp.windows.first?.backgroundColor = .clear
-        NSApp.windows.first?.titlebarAppearsTransparent = true
-        NSApp.windows.first?.isMovableByWindowBackground = true
+        if let window = NSApp.windows.first { WindowBehavior.configure(window) }
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }

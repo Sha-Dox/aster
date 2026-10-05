@@ -213,16 +213,34 @@ final class AppleModelIntegrationTests: XCTestCase {
         throw XCTSkip("Foundation Models is unavailable in this SDK.")
         #endif
     }
+    func testSummaryExplainsAnnualEstimateInsteadOfReturningTopicTags() async throws {
+        guard ProcessInfo.processInfo.environment["ASTER_TEST_APPLE_INTELLIGENCE"] == "1" else { throw XCTSkip("Opt in to the on-device summary quality test.") }
+        #if canImport(FoundationModels)
+        if #available(macOS 26.0, *), AppleIntelligenceStatus.available {
+            let mail = Mail(id: "annual-estimate", sender: Address("Casey Rivera", "casey@example.com"), subject: "Production estimate", preview: "A rough annual range is enough.", body: "Could you share a rough range of expected annual production volume for this fictional project? This helps us plan tooling. There is no firm deadline.")
+            let notes = try await AppleIntelligence().summarize([mail])
+            let text = (notes.summary + " " + notes.action).lowercased()
+            XCTAssertTrue(["annual", "yearly", "per year"].contains { text.contains($0) })
+            XCTAssertTrue(text.contains("tooling")); XCTAssertTrue(["estimate", "range", "volume"].contains { notes.action.lowercased().contains($0) })
+            XCTAssertLessThanOrEqual(notes.details.count, 3)
+            XCTAssertTrue(notes.details.allSatisfy { $0.split(separator: " ").count >= 4 })
+        } else { throw XCTSkip(AppleIntelligenceStatus.description) }
+        #else
+        throw XCTSkip("Foundation Models is unavailable in this SDK.")
+        #endif
+    }
     func testSelectedTextBecomesCompleteFormalEmail() async throws {
         guard ProcessInfo.processInfo.environment["ASTER_TEST_APPLE_INTELLIGENCE"] == "1" else { throw XCTSkip("Opt in to the on-device formalisation integration test.") }
         #if canImport(FoundationModels)
         if #available(macOS 26.0, *), AppleIntelligenceStatus.available {
-            var style = WritingStyle(); style.language = "English"; style.length = .brief; style.signature = "Best regards,\nAlex"
-            let request = FormaliseRequest(selectedText: "I choose option A, but please change Monday to Thursday. Ask Professor Park if that works. Do not invent a reason.", style: style, senderAddress: "student@example.com", recipientAddress: "professor@example.edu", existingSubject: "")
+            var style = WritingStyle(); style.language = "English"; style.length = .brief
+            let request = FormaliseRequest(selectedText: "I choose option A, but please change Monday to Thursday. Ask Professor Park if that works. Do not invent a reason.", style: style, senderAddress: "student@example.com", recipientAddress: "professor@example.edu", existingSubject: "", senderName: "Alex Rivera")
             let email = try await AppleIntelligence().formalise([], request: request)
             XCTAssertFalse(email.subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             XCTAssertNotNil(email.body.range(of: #"\bA\b"#, options: .regularExpression))
-            XCTAssertTrue(email.body.lowercased().contains("thursday")); XCTAssertTrue(email.body.contains("Alex"))
+            XCTAssertTrue(email.body.lowercased().contains("thursday"), email.body)
+            XCTAssertTrue(email.body.contains("Alex Rivera"), email.body)
+            XCTAssertFalse(email.body.contains("[Your name]"), email.body)
         } else { throw XCTSkip(AppleIntelligenceStatus.description) }
         #else
         throw XCTSkip("Foundation Models is unavailable in this SDK.")

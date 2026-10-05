@@ -5,7 +5,7 @@ struct WorkspaceView: View {
     @EnvironmentObject var workspace: WorkspaceState
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 15) {
+            HStack(spacing: 12) {
                 HStack(spacing: 9) { AsterMark(size: 30); Text("aster").font(.system(size: 23, weight: .semibold, design: .rounded)).tracking(-0.8) }
                 Divider().frame(height: 22).padding(.horizontal, 5)
                 Picker("Account", selection: $workspace.scope) {
@@ -15,7 +15,8 @@ struct WorkspaceView: View {
                 Spacer()
                 Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                 Button { workspace.active.showSettings = true } label: { Image(systemName: "slider.horizontal.3").font(.system(size: 13)).frame(width: 34, height: 34) }.buttonStyle(.plain).modifier(GlassSurface(radius: 12, interactive: true)).help("Accounts & controls").accessibilityLabel("Accounts & controls")
-            }.padding(.leading, 90).padding(.trailing, 22).padding(.top, 16).padding(.bottom, 12)
+            }.padding(.leading, 80).padding(.trailing, 14).padding(.top, 16).padding(.bottom, 6)
+                .overlay(alignment: .top) { WindowDragStrip().frame(height: 12).padding(.leading, 80) }
                 .disabled(workspace.active.composer != nil || workspace.active.replyAssistant != nil)
             if workspace.scope == "unified", !workspace.profiles.isEmpty {
                 UnifiedInboxView().environmentObject(workspace.active)
@@ -33,17 +34,18 @@ struct UnifiedInboxView: View {
     @EnvironmentObject var workspace: WorkspaceState
     @EnvironmentObject var state: AppState
     @AppStorage("appearance") private var appearance = "system"
+    @AppStorage("senderName") private var workspaceName = ""
     @State private var unreadOnly = false
     @FocusState private var searching: Bool
     private var rows: [UnifiedMail] { workspace.unifiedRows.filter { !unreadOnly || !$0.mail.isRead } }
     var body: some View {
-        HStack(spacing: 12) {
-            accountRail.frame(width: 180).padding(.leading, 14).padding(.vertical, 12)
-            VStack(alignment: .leading, spacing: 16) {
+        HStack(spacing: 8) {
+            accountRail.frame(width: 174).padding(.leading, 8).padding(.vertical, 8)
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 6) {
                         SectionEyebrow(title: "Your daily focus")
-                        Text("Priority inbox").font(.system(size: 28, weight: .semibold, design: .rounded)).tracking(-0.9)
+                        Text("Priority inbox").font(.system(size: 25, weight: .semibold, design: .rounded)).tracking(-0.9)
                         Text(workspace.syncingCount > 0 ? "Syncing \(workspace.syncingCount) accounts…" : "All your accounts, together").font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -84,8 +86,8 @@ struct UnifiedInboxView: View {
                     }
                 }
                 Text("\(rows.count) conversations · settings apply separately to each account").font(.system(size: 10)).foregroundStyle(.secondary)
-            }.padding(20).frame(minWidth: 320, idealWidth: 365, maxWidth: 410).modifier(GlassSurface(radius: 25)).padding(.vertical, 12)
-            ReaderView().frame(minWidth: 400, maxWidth: .infinity).clipShape(RoundedRectangle(cornerRadius: 24)).padding(.trailing, 12).padding(.vertical, 12)
+            }.padding(12).frame(minWidth: 320, idealWidth: 365, maxWidth: 410).modifier(GlassSurface(radius: 18)).padding(.vertical, 8)
+            ReaderView().frame(minWidth: 400, maxWidth: .infinity).clipShape(RoundedRectangle(cornerRadius: 24)).padding(.trailing, 8).padding(.vertical, 8)
         }
         .preferredColorScheme(appearance == "light" ? .light : appearance == "dark" ? .dark : nil)
         .sheet(isPresented: $state.showSettings) { SettingsView().environmentObject(state).presentationBackground(.clear) }
@@ -101,10 +103,10 @@ struct UnifiedInboxView: View {
         }
     }
     private var accountRail: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 5) {
                 SectionEyebrow(title: "Workspace")
-                Text("One place.\nEvery inbox.").font(.system(size: 21, weight: .medium, design: .rounded)).tracking(-0.5)
+                Text(workspaceName.isEmpty ? "Your workspace" : "Hi, " + workspaceName).font(.system(size: 16, weight: .semibold, design: .rounded)).tracking(-0.5).lineLimit(3)
             }.padding(.top, 8)
             Button { state.compose() } label: { HStack { Image(systemName: "square.and.pencil"); Text("Compose"); Spacer(); Text("⌘N").font(.system(size: 10)).opacity(0.7) } }.buttonStyle(AccentButtonStyle()).disabled(!state.isReady)
             VStack(alignment: .leading, spacing: 10) {
@@ -132,7 +134,7 @@ struct UnifiedInboxView: View {
             Button { state.showPalette = true } label: { HStack { Image(systemName: "command"); Text("Commands"); Spacer(); Text("⌘K").font(.system(size: 10)) }.font(.system(size: 11)).foregroundStyle(.secondary) }.buttonStyle(.plain)
             Divider().opacity(0.5)
             HStack(spacing: 6) { Image(systemName: "internaldrive"); Text("Cached on this Mac") }.font(.system(size: 9)).foregroundStyle(.secondary)
-        }.padding(16).frame(maxHeight: .infinity).modifier(GlassSurface(radius: 25))
+        }.padding(12).frame(maxHeight: .infinity).modifier(GlassSurface(radius: 18))
     }
 
 }

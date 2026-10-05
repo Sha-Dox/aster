@@ -34,7 +34,7 @@ struct AccentButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(.white).padding(.horizontal, 15).padding(.vertical, 11)
+            .foregroundStyle(.white).padding(.horizontal, 12).padding(.vertical, 9)
             .background(LinearGradient(colors: [Color(red: 0.40, green: 0.31, blue: 0.76), Color(red: 0.27, green: 0.25, blue: 0.58)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 13))
             .overlay(RoundedRectangle(cornerRadius: 13).stroke(.white.opacity(0.24), lineWidth: 0.7))
             .shadow(color: .aster.opacity(configuration.isPressed ? 0.05 : 0.24), radius: 10, y: 4)
@@ -51,7 +51,7 @@ struct InboxMetric: View {
             Image(systemName: symbol).font(.system(size: 12, weight: .medium)).foregroundStyle(accent)
             Text("\(count)").font(.system(size: 15, weight: .semibold, design: .rounded)).monospacedDigit()
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
-        }.padding(.horizontal, 12).padding(.vertical, 10)
+        }.padding(.horizontal, 9).padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 13))
     }

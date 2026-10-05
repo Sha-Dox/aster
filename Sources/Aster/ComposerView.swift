@@ -15,40 +15,46 @@ struct ComposerView: View {
     init(initial: Composer) { _draft = State(initialValue: initial) }
     var body: some View {
         VStack(spacing: 0) {
-            HStack { Text(draft.mode == "new" ? "New message" : draft.mode == "forward" ? "Forward" : "Reply").font(.system(size: 19, weight: .semibold)); Spacer(); Button("Save & close") { save(send: false, close: true) }.disabled(busy) }.padding(24)
+            HStack { Text(draft.mode == "new" ? "New message" : draft.mode == "forward" ? "Forward" : "Reply").font(.system(size: 19, weight: .semibold)); Spacer(); Button("Save & close") { save(send: false, close: true) }.disabled(busy) }.padding(16)
             Divider()
             VStack(spacing: 12) {
-                HStack { Text("From").font(.system(size: 12)).foregroundStyle(.secondary).frame(width: 55, alignment: .leading); Text(state.accountName).font(.system(size: 13, weight: .medium)).textSelection(.enabled); Spacer() }
+                HStack { Text("From").font(.system(size: 12)).foregroundStyle(.secondary).frame(width: 55, alignment: .leading); Text(state.senderIdentity).font(.system(size: 13, weight: .medium)).textSelection(.enabled); Spacer() }
                 field("To", text: $draft.to)
                 field("Cc", text: $draft.cc)
                 field("Bcc", text: Binding(get: { draft.bcc ?? "" }, set: { draft.bcc = $0 }))
                 field("Subject", text: $draft.subject)
-            }.padding(24).disabled(busy)
-            Divider().padding(.horizontal, 24)
+            }.padding(16).disabled(busy)
+            Divider().padding(.horizontal, 16)
             HStack {
                 Text(selection.length > 0 ? "Selected text → complete formal email" : "Select rough text below, then Formalise").font(.system(size: 11)).foregroundStyle(.secondary)
                 Spacer()
                 Button { formalise() } label: { Label(busy ? "Working…" : "Formalise", systemImage: "sparkles") }.buttonStyle(.borderless).disabled(busy || selection.length == 0).help("Create a full formal email from only the selected text")
-            }.padding(.horizontal, 24).padding(.top, 14)
-            SelectedTextEditor(text: $draft.body, selection: $selection, editable: !busy, label: "Draft body · select text to formalise", onFormalise: { text in formalise(text: text) }).padding(20).frame(minHeight: 270)
+            }.padding(.horizontal, 16).padding(.top, 14)
+            SelectedTextEditor(text: $draft.body, selection: $selection, editable: !busy, label: "Draft body · select text to formalise", onFormalise: { text in formalise(text: text) }).padding(12).frame(minHeight: 270)
             if let files = draft.files, !files.isEmpty {
                 ScrollView(.horizontal) {
                     HStack {
                         ForEach(files) { file in
                             HStack(spacing: 7) { Image(systemName: "doc"); Text(file.name).lineLimit(1); Button { draft.files?.removeAll { $0.id == file.id }; scheduleAutosave() } label: { Image(systemName: "xmark").font(.system(size: 9)) }.buttonStyle(.plain).disabled(busy) }.font(.system(size: 11)).padding(9).modifier(GlassSurface(radius: 12))
                         }
-                    }.padding(.horizontal, 24).padding(.vertical, 4)
+                    }.padding(.horizontal, 16).padding(.vertical, 4)
                 }.frame(height: 47)
             }
-            if let failure { Text(failure).font(.system(size: 12)).foregroundStyle(.orange).textSelection(.enabled).padding(.horizontal, 24).padding(.bottom, 12) }
+            if let failure { Text(failure).font(.system(size: 12)).foregroundStyle(.orange).textSelection(.enabled).padding(.horizontal, 16).padding(.bottom, 12) }
             HStack {
                 Label(state.isDemo ? "Demo · no mail will be delivered" : saveStatus, systemImage: "lock").font(.system(size: 11)).foregroundStyle(.secondary)
                 Spacer()
-                Button { do { let files = try state.importAttachments(existing: draft.files ?? []); draft.files = (draft.files ?? []) + files; scheduleAutosave() } catch { failure = error.localizedDescription } } label: { Image(systemName: "paperclip") }.help("Attach files · up to 3 MB each").disabled(busy)
+                Button {
+                    busy = true
+                    Task {
+                        do { let files = try await state.importAttachments(existing: draft.files ?? []); draft.files = (draft.files ?? []) + files; busy = false; scheduleAutosave() }
+                        catch { failure = error.localizedDescription; busy = false }
+                    }
+                } label: { Image(systemName: "paperclip") }.help("Attach files · up to 3 MB each").disabled(busy)
                 if busy { ProgressView().controlSize(.small) }
                 Button("Save draft") { save(send: false, close: false) }.disabled(busy)
                 Button("Send") { save(send: true, close: true) }.buttonStyle(AccentButtonStyle()).disabled(busy || (draft.to.isEmpty && draft.cc.isEmpty && (draft.bcc ?? "").isEmpty)).keyboardShortcut(.return, modifiers: [.command, .shift])
-            }.padding(18).modifier(GlassSurface(radius: 18)).padding(12)
+            }.padding(12).modifier(GlassSurface(radius: 18)).padding(12)
         }.frame(width: 760, height: 730).background { AppBackdrop() }.interactiveDismissDisabled().tint(.aster)
             .onChange(of: draft.body) { _, _ in scheduleAutosave() }
             .onChange(of: draft.subject) { _, _ in scheduleAutosave() }

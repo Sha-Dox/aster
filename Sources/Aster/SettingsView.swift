@@ -6,6 +6,10 @@ struct SettingsView: View {
     @EnvironmentObject var workspace: WorkspaceState
     @State private var editingAccount: UUID?
     @State private var defaultStyle = WritingStyle()
+    @AppStorage("senderName") private var savedSenderName = ""
+    @State private var profileName = ""
+    @State private var profileSaved = false
+    @State private var profileFailure: String?
     @Environment(\.dismiss) private var dismiss
     @AppStorage("clientID") private var clientID = ""
     @AppStorage("googleClientID") private var googleClientID = ""
@@ -27,6 +31,21 @@ struct SettingsView: View {
                 Spacer(); Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
             }.padding(26)
             Form {
+                Section("Personalization · your profile") {
+                    HStack(spacing: 12) {
+                        IdentityAvatar(name: profileName.isEmpty ? "Your profile" : profileName, size: 42, symbol: profileName.isEmpty ? "person" : nil)
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Your name · as you want to sign emails", text: $profileName).onChange(of: profileName) { _, value in profileSaved = value == savedSenderName }
+                            Text("Your saved name is reused in AI writing and sender previews. It is never guessed from incoming mail.").font(.system(size: 10)).foregroundStyle(.secondary)
+                        }
+                    }
+                    Button(profileSaved ? "Profile saved" : "Save profile") {
+                        do { try SenderPersonalization.validate(profileName); savedSenderName = profileName.trimmingCharacters(in: .whitespacesAndNewlines); profileName = savedSenderName; profileSaved = true; profileFailure = nil }
+                        catch { profileFailure = error.localizedDescription }
+                    }
+                    if let profileFailure { Text(profileFailure).font(.system(size: 11)).foregroundStyle(.orange) }
+                    Text("Saved on this Mac. Clearing the name removes the workspace default. Each address can override it; a custom writing signature takes precedence. Your provider's account profile is not changed.").font(.system(size: 11)).foregroundStyle(.secondary)
+                }
                 accountControls
                 Section("Appearance") { Picker("Color scheme", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }.pickerStyle(.segmented)
                     Picker("Glass appearance", selection: $glassStyle) { Text("Clear glass").tag("clear"); Text("Frosted glass").tag("frosted"); Text("Solid").tag("solid") }.pickerStyle(.segmented)
@@ -71,7 +90,7 @@ struct SettingsView: View {
                 }
             }.formStyle(.grouped)
         }.frame(width: 650, height: 780).background { AppBackdrop() }.tint(.aster)
-            .onAppear { if let data = UserDefaults.standard.data(forKey: "defaultWritingStyle:v1"), let saved = try? JSONDecoder().decode(WritingStyle.self, from: data) { defaultStyle = saved }; editingAccount = workspace.profiles.first(where: { $0.email == state.accountName })?.id ?? workspace.profiles.first?.id; apiKey = Keychain.read("provider"); googleSecret = Keychain.read("google-client-secret") }
+            .onAppear { profileName = savedSenderName; if let data = UserDefaults.standard.data(forKey: "defaultWritingStyle:v1"), let saved = try? JSONDecoder().decode(WritingStyle.self, from: data) { defaultStyle = saved }; editingAccount = workspace.profiles.first(where: { $0.email == state.accountName })?.id ?? workspace.profiles.first?.id; apiKey = Keychain.read("provider"); googleSecret = Keychain.read("google-client-secret") }
     }
     private var editedProfile: AccountProfile? { workspace.profiles.first { $0.id == editingAccount } }
     private func policyBinding<Value>(_ key: WritableKeyPath<AccountPolicy, Value>, fallback: Value) -> Binding<Value> {
@@ -104,6 +123,17 @@ struct SettingsView: View {
                     TextField("Always prioritize senders · comma-separated addresses", text: Binding(get: { editedProfile?.policy.prioritySenders.joined(separator: ", ") ?? "" }, set: { value in
                         guard let current = editedProfile else { return }; var policy = current.policy; policy.prioritySenders = value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }; workspace.updatePolicy(policy, accountID: current.id)
                     }))
+                    Toggle("Use a different name for this address", isOn: Binding(get: { editedProfile?.policy.senderName != nil }, set: { enabled in
+                        guard let current = editedProfile else { return }; var policy = current.policy; policy.senderName = enabled ? savedSenderName : nil; workspace.updatePolicy(policy, accountID: current.id)
+                    }))
+                    if profile.policy.senderName != nil {
+                        TextField("Name for this address · leave blank to keep it unset", text: Binding(get: { editedProfile?.policy.senderName ?? "" }, set: { value in
+                            do { try SenderPersonalization.validate(value); guard let current = editedProfile else { return }; var policy = current.policy; policy.senderName = value; workspace.updatePolicy(policy, accountID: current.id); profileFailure = nil }
+                            catch { profileFailure = error.localizedDescription }
+                        }))
+                    } else {
+                        Text(savedSenderName.isEmpty ? "No sender name saved yet. Add it under Personalization." : "Uses your workspace name: " + savedSenderName).font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
                     DisclosureGroup("Writing style for this address") {
                         WritingStyleControls(style: Binding(get: { editedProfile?.policy.writingStyle ?? defaultStyle }, set: { value in
                             guard let current = editedProfile else { return }; var policy = current.policy; policy.writingStyle = value; workspace.updatePolicy(policy, accountID: current.id)

@@ -43,7 +43,7 @@ struct AppBackdrop: View {
                 Ellipse().fill(Color.pink.opacity(scheme == .dark ? 0.14 : 0.10)).frame(width: 420, height: 460).blur(radius: 110).offset(x: 240, y: -220)
                 Ellipse().fill(Color.cyan.opacity(scheme == .dark ? 0.25 : 0.18)).frame(width: 600, height: 400).blur(radius: 120).offset(x: 520, y: 380)
             }
-        }.ignoresSafeArea().allowsHitTesting(false)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity).clipped().ignoresSafeArea().allowsHitTesting(false)
     }
 }
 
@@ -56,8 +56,10 @@ struct DesktopGlassBackdrop: NSViewRepresentable {
     func updateNSView(_ view: NSVisualEffectView, context: Context) { view.material = glassStyle == "clear" ? .hudWindow : .underWindowBackground }
 }
 final class DesktopGlassEffectView: NSVisualEffectView {
+    override var mouseDownCanMoveWindow: Bool { false }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        window?.isOpaque = false; window?.backgroundColor = .clear; window?.titlebarAppearsTransparent = true
+        if let window { WindowBehavior.configure(window) }
     }
 }

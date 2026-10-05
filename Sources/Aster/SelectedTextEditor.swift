@@ -10,11 +10,11 @@ struct SelectedTextEditor: NSViewRepresentable {
     var onFormalise: ((String) -> Void)?
     func makeCoordinator() -> Coordinator { Coordinator(self) }
     func makeNSView(context: Context) -> NSScrollView {
-        let scroll = NSScrollView(); scroll.hasVerticalScroller = true; scroll.drawsBackground = false
+        let scroll = SelectionScrollView(); scroll.hasVerticalScroller = true; scroll.drawsBackground = false
         let view = FormalisingTextView(frame: .zero)
         view.isRichText = false; view.allowsUndo = true; view.isEditable = editable; view.isSelectable = true
         view.drawsBackground = false; view.font = .systemFont(ofSize: 14); view.textColor = .textColor
-        view.textContainerInset = NSSize(width: 12, height: 12)
+        view.textContainerInset = NSSize(width: 8, height: 8)
         view.isVerticallyResizable = true; view.isHorizontallyResizable = false
         view.minSize = .zero; view.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         view.textContainer?.containerSize = NSSize(width: scroll.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
@@ -48,7 +48,9 @@ struct SelectedTextEditor: NSViewRepresentable {
         }
     }
 }
+final class SelectionScrollView: NSScrollView { override var mouseDownCanMoveWindow: Bool { false } }
 final class FormalisingTextView: NSTextView {
+    override var mouseDownCanMoveWindow: Bool { false }
     var onFormalise: ((String) -> Void)?
     override func menu(for event: NSEvent) -> NSMenu? {
         let menu = super.menu(for: event) ?? NSMenu()

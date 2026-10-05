@@ -7,7 +7,7 @@
 
 A native, open-source macOS mail client for Microsoft 365, Outlook, Gmail and Google Workspace. SwiftUI, SQLite, Microsoft Graph, Gmail API, MSAL and AppAuth. Original messages remain central; an attention briefing helps you decide what to read next.
 
-Version 0.6 provides instruction-driven email previews, customizable writing language and style, multiple simultaneous accounts, a unified Priority inbox, per-account inbox and Junk controls, native Liquid Glass surfaces, on-device Apple Intelligence, Google authentication and synchronization, durable offline changes, paged cached mail, autosaved local drafts, Bcc and outgoing attachments. It is a substantially expanded development release. See [release readiness](RELEASE_READINESS.md) for the remaining production gates.
+Version 0.7 provides instruction-driven email previews, customizable writing language and style, multiple simultaneous accounts, a unified Priority inbox, per-account inbox and Junk controls, native Liquid Glass surfaces, on-device Apple Intelligence, Google authentication and synchronization, durable offline changes, paged cached mail, autosaved local drafts, Bcc and outgoing attachments. It is a substantially expanded development release. See [release readiness](RELEASE_READINESS.md) for the remaining production gates.
 
 ## Run and build
 
@@ -81,7 +81,17 @@ Clear Liquid Glass is the default for navigation, search, briefing and action co
 
 ## Interface
 
+The layout uses compact sidebar spacing and inset reading surfaces. Window dragging is restricted to the empty top strip so text remains selectable. Aster uses normal window level and does not force activation; file pickers use asynchronous sheets.
+
 A compact workspace bar and account rail anchor the unified inbox. Conversation cards combine sender avatars, unread indicators, receiving-account labels and attention hints. Cached unread/reply metrics provide a quick overview. The reader uses an editorial subject heading, individual message surfaces and focused reply/AI actions. Glass surfaces sit over a tinted desktop blur; solid and accessibility fallbacks remain available.
+
+## Personalization
+
+In **Settings → Personalization · your profile**, enter your name as you want to sign emails and click **Save profile**. Aster remembers it on this Mac and uses it in AI writing, sender previews and the workspace greeting. It does not guess your name from incoming messages or rename your Microsoft/Google account profile.
+
+Under **Inbox controls · per account**, enable **Use a different name for this address** to override the workspace name. Leaving the override blank keeps that address unnamed; disabling the override inherits the workspace name again. Names remain independent of writing-style preferences. Your custom writing signature takes precedence over the default name-only sign-off. Missing name placeholders and sign-offs are repaired in the editable preview; sending still requires your acceptance.
+
+Saved names are local preferences. An explicit cloud-model request includes the resolved sender name along with the requested writing preferences. Apple Intelligence generation stays on-device. No name is uploaded in the background.
 
 ## Select text and formalise it
 
@@ -103,7 +113,7 @@ Select a conversation and click **Write with AI** (⇧⌘W). Tell the assistant 
 
 Changing your instruction or style requires regeneration before acceptance. A generated preview is tied to its account/session and cannot be accepted twice. After a send attempt, regeneration is paused; ambiguous sends retain the durable no-repeat protection. Check Sent before deliberately creating another reply after an uncertain result.
 
-Settings has default writing preferences and overrides for each address. You can also click **Remember this style for this address** inside the assistant. Your intent decides the answer; style preferences affect how it is written. Without a signature, the model is instructed to use a name placeholder rather than invent your name. Review all names, substitutions and dates before accepting.
+Settings has default writing preferences and overrides for each address. You can also click **Remember this style for this address** inside the assistant. Your intent decides the answer; style preferences affect how it is written. If neither a saved name nor a custom signature is available, a name placeholder is used. Saved names and custom sign-offs are repaired in the preview rather than relying solely on model output. Review all names, substitutions and dates before accepting.
 
 Apple Intelligence runs the writing on-device when available. A configured remote endpoint receives the intent, writing preferences, sender address and cached conversation only when you request generation. Local rules alone cannot generate an instructed email. Cached/model context may be incomplete or shortened; no attachment contents are read by this assistant. Live provider sending remains unverified.
 

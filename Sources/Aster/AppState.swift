@@ -34,7 +34,8 @@ struct ReplyAssistantContext: Identifiable {
 @MainActor final class AppState: ObservableObject {
     private let cacheRoot: URL?
     private let persistDemoPreference: Bool
-    init(cacheRoot: URL? = nil, persistDemoPreference: Bool = true) { self.cacheRoot = cacheRoot; self.persistDemoPreference = persistDemoPreference }
+    private let workspaceNameProvider: () -> String
+    init(cacheRoot: URL? = nil, persistDemoPreference: Bool = true, workspaceNameProvider: @escaping () -> String = { UserDefaults.standard.string(forKey: "senderName") ?? "" }) { self.cacheRoot = cacheRoot; self.persistDemoPreference = persistDemoPreference; self.workspaceNameProvider = workspaceNameProvider }
     @Published var policy = AccountPolicy()
     @Published var priorityMessages: [Mail] = []
     @Published var priorityCount = 0
@@ -404,6 +405,8 @@ struct ReplyAssistantContext: Identifiable {
         guard mode == "new" || mail != nil else { return }
         composer = makeComposer(mode: mode, mail: mail, generated: generated)
     }
+    var senderName: String { SenderPersonalization.resolve(workspaceName: workspaceNameProvider(), accountName: policy.senderName) }
+    var senderIdentity: String { senderName.isEmpty ? accountName : "\(senderName) <\(accountName)>" }
     var writingStyle: WritingStyle {
         if let style = policy.writingStyle { return style }
         if let data = UserDefaults.standard.data(forKey: "defaultWritingStyle:v1"), let style = try? JSONDecoder().decode(WritingStyle.self, from: data) { return style }
@@ -425,12 +428,12 @@ struct ReplyAssistantContext: Identifiable {
     }
     func generateAssistedReply(_ context: ReplyAssistantContext, intent: String, style: WritingStyle) async throws -> Composer {
         guard context.session == generation, context.accountEmail == accountName else { throw MailError.message("This account changed. Open the reply assistant again.") }
-        let request = ReplyRequest(intent: intent, style: style, senderAddress: context.accountEmail, targetMessageID: context.mail.id)
+        let request = ReplyRequest(intent: intent, style: style, senderAddress: context.accountEmail, targetMessageID: context.mail.id, senderName: senderName)
         try request.validate()
         let body = try await intelligence.draftReply(context.thread, request: request)
         try Task.checkCancellation()
         guard context.session == generation else { throw CancellationError() }
-        let clean = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        let clean = SenderPersonalization.finish(body, name: request.senderName, signature: style.signature)
         guard !clean.isEmpty, clean.count <= 30_000 else { throw MailError.message("The generated reply is empty or too long. Adjust your instructions and try again.") }
         let draft = makeComposer(mode: context.replyAll ? "replyAll" : "reply", mail: context.mail, generated: clean, quoteOriginal: false)
         generatedReplies[draft.id] = context.id
@@ -450,12 +453,12 @@ struct ReplyAssistantContext: Identifiable {
         let context: [Mail]
         if let source = draft.sourceID, let original = try await store?.message(source) { context = try await store?.thread(original.threadID) ?? [original] }
         else { context = [] }
-        let request = FormaliseRequest(selectedText: selectedText, style: style, senderAddress: email, recipientAddress: draft.to, existingSubject: draft.subject, targetMessageID: draft.sourceID)
+        let request = FormaliseRequest(selectedText: selectedText, style: style, senderAddress: email, recipientAddress: draft.to, existingSubject: draft.subject, targetMessageID: draft.sourceID, senderName: senderName)
         try request.validate()
         let generated = try await intelligence.formalise(context, request: request)
         try Task.checkCancellation()
         guard session == generation, email == accountName else { throw CancellationError() }
-        let body = generated.body.trimmingCharacters(in: .whitespacesAndNewlines)
+        let body = SenderPersonalization.finish(generated.body, name: request.senderName, signature: style.signature)
         let subject = generated.subject.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !body.isEmpty, body.count <= 30_000, subject.count <= 998, !subject.unicodeScalars.contains(where: { $0.value < 32 || $0.value == 127 }) else { throw MailError.message("The generated email is empty or has an invalid subject. Try again.") }
         var preview = draft; preview.body = body
@@ -482,12 +485,10 @@ struct ReplyAssistantContext: Identifiable {
     private func plainText(_ html: String) -> String {
         html.replacingOccurrences(of: "(?i)<br\\s*/?>|</p>|</div>", with: "\n", options: .regularExpression).replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression).replacingOccurrences(of: "&nbsp;", with: " ").replacingOccurrences(of: "&lt;", with: "<").replacingOccurrences(of: "&gt;", with: ">").replacingOccurrences(of: "&amp;", with: "&")
     }
-    func generateReply() async {
-        do { let id = selectedID; let session = generation; let text = try await intelligence.draftReply(thread); if selectedID == id && session == generation { compose(mode: "reply", generated: text) } } catch { self.error = error.localizedDescription }
-    }
-    func importAttachments(existing: [DraftFile]) throws -> [DraftFile] {
+    func generateReply() async { openReplyAssistant() }
+    func importAttachments(existing: [DraftFile]) async throws -> [DraftFile] {
         let panel = NSOpenPanel(); panel.allowsMultipleSelection = true; panel.canChooseDirectories = false; panel.canChooseFiles = true
-        guard panel.runModal() == .OK else { return [] }
+        guard await presentFilePanel(panel) == .OK else { return [] }
         let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Aster/DraftAttachments", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         var result: [DraftFile] = [], total = existing.reduce(0) { $0 + $1.size }
@@ -504,19 +505,21 @@ struct ReplyAssistantContext: Identifiable {
         return result
     }
     func autosave(_ value: Composer) async throws {
+        try SenderPersonalization.validate(senderName)
         guard let store else { return }
         let folder = folders.first { $0.role == "drafts" }?.id ?? "drafts"
-        var mail = Mail(id: value.localID, threadID: value.sourceID.flatMap { source in messages.first { $0.id == source }?.threadID }, folderID: folder, sender: Address("You", accountName), to: AddressParser.parse(value.to), cc: AddressParser.parse(value.cc), subject: value.subject, preview: String(value.body.prefix(160)), body: value.body, isRead: true, isDraft: true)
+        var mail = Mail(id: value.localID, threadID: value.sourceID.flatMap { source in messages.first { $0.id == source }?.threadID }, folderID: folder, sender: Address(senderName.isEmpty ? "You" : senderName, accountName), to: AddressParser.parse(value.to), cc: AddressParser.parse(value.cc), subject: value.subject, preview: String(value.body.prefix(160)), body: value.body, isRead: true, isDraft: true)
         mail.bcc = AddressParser.parse(value.bcc ?? ""); mail.hasAttachments = !(value.files ?? []).isEmpty
         try await store.saveDraft(mail, context: String(decoding: JSONEncoder().encode(value), as: UTF8.self))
     }
     func saveComposer(_ value: Composer, send: Bool, presentComposerUpdates: Bool = true) async throws -> Composer {
+        try SenderPersonalization.validate(senderName)
         guard let store else { throw MailError.message("No mailbox is open.") }
         let session = generation
         let to = AddressParser.parse(value.to), cc = AddressParser.parse(value.cc), bcc = AddressParser.parse(value.bcc ?? "")
         guard !send || (!(to + cc + bcc).isEmpty && (to + cc + bcc).allSatisfy { MIME.validAddress($0.address) }) else { throw MailError.message("Enter valid recipient addresses, separated by commas.") }
         let folderID = folders.first { $0.role == "drafts" }?.id ?? "drafts"
-        var mail = Mail(id: value.localID, threadID: value.sourceID.flatMap { source in messages.first { $0.id == source }?.threadID }, folderID: folderID, sender: Address("You", accountName), to: to, cc: cc, subject: value.subject, preview: String(value.body.prefix(160)), body: value.body, isRead: true, isDraft: true)
+        var mail = Mail(id: value.localID, threadID: value.sourceID.flatMap { source in messages.first { $0.id == source }?.threadID }, folderID: folderID, sender: Address(senderName.isEmpty ? "You" : senderName, accountName), to: to, cc: cc, subject: value.subject, preview: String(value.body.prefix(160)), body: value.body, isRead: true, isDraft: true)
         mail.bcc = bcc; mail.hasAttachments = !(value.files ?? []).isEmpty
         var result = value
         notice = nil
@@ -579,7 +582,15 @@ struct ReplyAssistantContext: Identifiable {
     func download(_ attachment: Attachment) async {
         guard let backend, let mail = selected else { return }
         let panel = NSSavePanel(); panel.nameFieldStringValue = URL(fileURLWithPath: attachment.name).lastPathComponent
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard await presentFilePanel(panel) == .OK, let url = panel.url else { return }
         do { let data = try await backend.attachmentData(mail.id, attachment.id); try data.write(to: url, options: .atomic); notice = "Attachment saved." } catch { self.error = error.localizedDescription }
     }
+    private func presentFilePanel(_ panel: NSSavePanel) async -> NSApplication.ModalResponse {
+        await withCheckedContinuation { continuation in
+            if let window = NSApp.keyWindow ?? NSApp.mainWindow {
+                panel.beginSheetModal(for: window) { continuation.resume(returning: $0) }
+            } else { panel.begin { continuation.resume(returning: $0) } }
+        }
+    }
+
 }

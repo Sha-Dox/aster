@@ -22,7 +22,7 @@ public struct RemoteIntelligence: IntelligenceProvider {
         return text
     }
     public func summarize(_ thread: [Mail]) async throws -> ThreadSummary {
-        let text = try await completion(thread, instruction: "Return only JSON with keys summary (string), action (string), details (array of strings). Include dates, unresolved questions and decisions only when explicit. Distinguish cached context from a complete conversation.")
+        let text = try await completion(thread, instruction: SummaryInstructions.text + " Return only JSON with keys summary (string), action (string), details (array of strings).")
         struct Output: Decodable { var summary: String; var action: String; var details: [String] }
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
         let output = try JSONDecoder().decode(Output.self, from: Data(clean.utf8))
@@ -35,14 +35,16 @@ public struct RemoteIntelligence: IntelligenceProvider {
         try request.validate()
         let text = try await completion(thread, instruction: request.instructions).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw MailError.message("The model returned an empty draft.") }
-        return text
+        return SenderPersonalization.finish(text, name: request.senderName, signature: request.style.signature)
     }
 
     public func formalise(_ thread: [Mail], request: FormaliseRequest) async throws -> GeneratedEmail {
         try request.validate()
         let text = try await completion(thread, instruction: request.instructions + " Return only valid JSON with subject and body string fields.")
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
-        return try JSONDecoder().decode(GeneratedEmail.self, from: Data(clean.utf8))
+        var email = try JSONDecoder().decode(GeneratedEmail.self, from: Data(clean.utf8))
+        email.body = SenderPersonalization.finish(email.body, name: request.senderName, signature: request.style.signature)
+        return email
     }
 
 }

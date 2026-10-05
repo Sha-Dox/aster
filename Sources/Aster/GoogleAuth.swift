@@ -48,7 +48,6 @@ import AsterCore
         try persist()
         let profile = try await GmailClient(tokens: self).profile()
         UserDefaults.standard.set(profile.emailAddress, forKey: emailKey)
-        NSApp.activate(ignoringOtherApps: true)
     }
     func freshToken() async throws -> String { authState?.setNeedsTokenRefresh(); return try await token() }
     func token() async throws -> String {

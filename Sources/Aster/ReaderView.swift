@@ -23,7 +23,7 @@ struct ReaderView: View {
                         Button("Forward") { state.compose(mode: "forward") }
                     }
                 } label: { Image(systemName: "ellipsis").font(.system(size: 16)) }.menuStyle(.borderlessButton).fixedSize().foregroundStyle(.secondary)
-            }.padding(.horizontal, 15).padding(.vertical, 10).modifier(GlassSurface(radius: 20)) }.padding(.horizontal, 25).padding(.top, 20).padding(.bottom, 18).disabled(state.selected == nil)
+            }.padding(.horizontal, 15).padding(.vertical, 10).modifier(GlassSurface(radius: 20)) }.padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 10).disabled(state.selected == nil)
             if let selected = state.selected {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
@@ -34,15 +34,15 @@ struct ReaderView: View {
                             Spacer()
                             Button { state.mutate(selected, kind: "flag", value: String(!selected.isFlagged)) } label: { Image(systemName: selected.isFlagged ? "star.fill" : "star").foregroundStyle(selected.isFlagged ? Color.orange : Color.secondary) }.buttonStyle(.plain).help("Star conversation")
                         }.padding(.bottom, 15)
-                        Text(selected.subject).font(.system(size: 32, weight: .semibold, design: .serif)).tracking(-0.7).lineSpacing(2).textSelection(.enabled).padding(.bottom, 20)
+                        Text(selected.subject).font(.system(size: 32, weight: .semibold, design: .serif)).tracking(-0.7).lineSpacing(2).textSelection(.enabled).padding(.bottom, 14)
                         HStack(spacing: 12) {
                             Button { state.summarize() } label: { Label("Summarize", systemImage: "text.alignleft").font(.system(size: 11, weight: .medium)).padding(.horizontal, 13).padding(.vertical, 8) }.buttonStyle(.plain).modifier(QuietGlass()).help("Summarize cached conversation · ⇧⌘S")
                             Text(AppleIntelligenceStatus.available && (UserDefaults.standard.string(forKey: "intelligenceMode") ?? "apple") == "apple" ? "Apple Intelligence · on-device" : "Original email below").font(.system(size: 10)).foregroundStyle(.tertiary)
                             Spacer()
-                        }.padding(.bottom, 27)
+                        }.padding(.bottom, 18)
                         if state.showSummary { summaryPanel.padding(.bottom, 28) }
                         ForEach(state.thread) { mail in
-                            message(mail).padding(24).frame(maxWidth: .infinity, alignment: .leading).background(Color.canvas.opacity(0.94), in: RoundedRectangle(cornerRadius: 21)).overlay(RoundedRectangle(cornerRadius: 21).stroke(Color.primary.opacity(0.055), lineWidth: 0.8)).shadow(color: .black.opacity(0.025), radius: 16, y: 7).padding(.bottom, 18)
+                            message(mail).padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.canvas.opacity(0.94), in: RoundedRectangle(cornerRadius: 21)).overlay(RoundedRectangle(cornerRadius: 21).stroke(Color.primary.opacity(0.055), lineWidth: 0.8)).shadow(color: .black.opacity(0.025), radius: 16, y: 7).padding(.bottom, 18)
                             if mail.id != state.thread.last?.id { Divider().opacity(0.45).padding(.bottom, 28) }
                         }
                         if selected.hasAttachments {
@@ -61,14 +61,14 @@ struct ReaderView: View {
                             Spacer(minLength: 8)
                             Button { state.openReplyAssistant() } label: { Label("Write with AI", systemImage: "sparkles").font(.system(size: 12, weight: .medium)).padding(.horizontal, 13).padding(.vertical, 10) }.buttonStyle(.plain).modifier(GlassSurface(radius: 13, interactive: true, tinted: true)).foregroundStyle(Color.aster)
                         }.padding(14).modifier(GlassSurface(radius: 20)).padding(.top, 6).padding(.bottom, 26)
-                    }.padding(.horizontal, 28).padding(.top, 14).frame(maxWidth: 800).frame(maxWidth: .infinity)
+                    }.padding(.horizontal, 16).padding(.top, 8).frame(maxWidth: 800).frame(maxWidth: .infinity)
                 }
             } else {
                 Spacer(); Image(systemName: "envelope.open").font(.system(size: 38, weight: .ultraLight)).foregroundStyle(Color.aster.opacity(0.5))
                 Text("Space for what matters.").font(.system(size: 21, weight: .medium)).padding(.top, 14)
                 Text("Select a conversation to read the original email.").font(.system(size: 12)).foregroundStyle(.secondary).padding(.top, 4); Spacer()
             }
-        }.modifier(GlassSurface(radius: 25))
+        }.modifier(GlassSurface(radius: 18))
     }
     private func tool(_ title: String, _ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) { Image(systemName: symbol).font(.system(size: 14)).frame(width: 22, height: 22) }.buttonStyle(.plain).padding(5).modifier(GlassSurface(radius: 12, interactive: true)).foregroundStyle(.secondary).help(title).accessibilityLabel(title)
@@ -85,7 +85,7 @@ struct ReaderView: View {
                 Text(mail.date.formatted(date: .abbreviated, time: .shortened)).font(.system(size: 10)).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
             }
             if mail.isHTML { SafeHTMLView(html: mail.body).frame(height: 460).clipShape(RoundedRectangle(cornerRadius: 8)) }
-            else { Text(mail.body).font(.system(size: 14)).lineSpacing(7).foregroundStyle(.primary.opacity(0.87)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
+            else { Text(mail.body).font(.system(size: 14)).lineSpacing(5).foregroundStyle(.primary.opacity(0.87)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
         }
     }
     private var summaryPanel: some View {
@@ -95,7 +95,13 @@ struct ReaderView: View {
             else if let summary = state.summary {
                 Text(summary.summary).font(.system(size: 13)).lineSpacing(4).textSelection(.enabled)
                 VStack(alignment: .leading, spacing: 5) { Text("NEXT ACTION").font(.system(size: 9, weight: .semibold)).tracking(1).foregroundStyle(Color.aster); Text(summary.action).font(.system(size: 12)).textSelection(.enabled) }
-                ForEach(Array(summary.details.enumerated()), id: \.offset) { _, detail in HStack(alignment: .top, spacing: 8) { Text("·"); Text(detail) }.font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled) }
+                if !summary.details.isEmpty {
+                    DisclosureGroup("Additional context") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(Array(summary.details.enumerated()), id: \.offset) { _, detail in Text(detail).font(.system(size: 11)).foregroundStyle(.secondary).textSelection(.enabled) }
+                        }.padding(.top, 6)
+                    }.font(.system(size: 11))
+                }
                 HStack {
                     Text(summary.source).font(.system(size: 9)).foregroundStyle(.tertiary)
                     Spacer()
